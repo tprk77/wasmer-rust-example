@@ -5,7 +5,7 @@ use std::str;
 use wasmer_runtime::{
     imports,
     func,
-    instantiate,
+    compile,
     error,
     Ctx,
     memory::MemoryView,
@@ -15,6 +15,9 @@ use wasmer_runtime::{
 static WASM: &'static [u8] = include_bytes!("../wasm-sample-app/target/wasm32-unknown-unknown/release/wasm_sample_app.wasm");
 
 fn main() -> error::Result<()> {
+
+    let module = compile(WASM)?;
+
     // Let's define the import object used to import our function
     // into our webassembly sample application.
     //
@@ -36,7 +39,7 @@ fn main() -> error::Result<()> {
     };
 
     // Compile our webassembly into an `Instance`.
-    let instance = instantiate(WASM, &import_object)?;
+    let instance = module.instantiate(&import_object)?;
 
     // Call our exported function!
     instance.call("hello_wasm", &[])?;
