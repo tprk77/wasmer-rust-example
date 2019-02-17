@@ -6,3 +6,4 @@ edition = "2018"
 
 [dependencies]
 wasmer-runtime = { path = "../wasmer/lib/runtime" }
+wasmer-emscripten = { path = "../wasmer/lib/emscripten" }
