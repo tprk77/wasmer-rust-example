@@ -8,6 +8,7 @@ use wasmer_runtime::{
     instantiate,
     error,
     Ctx,
+    memory::MemoryView,
 };
 
 // Make sure that the compiled wasm-sample-app is accessible at this path.
@@ -56,10 +57,12 @@ fn print_str(ctx: &mut Ctx, ptr: u32, len: u32) {
     let memory = ctx.memory(0);
 
     // Get a subslice that corresponds to the memory used by the string.
-    let str_slice = &memory[ptr as usize..(ptr + len) as usize];
+    let view: MemoryView<u8> = memory.view();
+    let str_vec: Vec<u8> = view[ptr as usize..(ptr + len) as usize]
+        .iter().map(|cell| cell.get()).collect();
 
     // Convert the subslice to a `&str`.
-    let string = str::from_utf8(str_slice).unwrap();
+    let string = str::from_utf8(&str_vec).unwrap();
 
     // Print it!
     println!("{}", string);
