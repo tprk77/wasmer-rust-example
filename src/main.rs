@@ -4,6 +4,7 @@ use std::str;
 
 use wasmer_runtime::{
     imports,
+    func,
     instantiate,
     error,
     Ctx,
@@ -29,12 +30,12 @@ fn main() -> error::Result<()> {
         // by our sample application.
         "env" => {
             // name         // func    // signature
-            "print_str" => print_str<[u32, u32] -> []>,
+            "print_str" => func!(print_str), //print_str<[u32, u32] -> []>,
         },
     };
 
     // Compile our webassembly into an `Instance`.
-    let mut instance = instantiate(WASM, import_object)?;
+    let instance = instantiate(WASM, &import_object)?;
 
     // Call our exported function!
     instance.call("hello_wasm", &[])?;
@@ -43,9 +44,7 @@ fn main() -> error::Result<()> {
 }
 
 // Let's define our "print_str" function.
-//
-// The declaration must start with "extern" or "extern "C"".
-extern fn print_str(ptr: u32, len: u32, ctx: &mut Ctx) {
+fn print_str(ctx: &mut Ctx, ptr: u32, len: u32) {
     // Get a slice that maps to the memory currently used by the webassembly
     // instance.
     //
