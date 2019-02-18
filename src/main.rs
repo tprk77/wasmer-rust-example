@@ -9,10 +9,14 @@ use wasmer_runtime::{
     error,
     Ctx,
     memory::MemoryView,
+    ImportObject,
 };
 
+use wasmer_emscripten;
+
 // Make sure that the compiled wasm-sample-app is accessible at this path.
-static WASM: &'static [u8] = include_bytes!("../wasm-sample-app/target/wasm32-unknown-unknown/release/wasm_sample_app.wasm");
+//static WASM: &'static [u8] = include_bytes!("../wasm-sample-app/target/wasm32-unknown-unknown/release/wasm_sample_app.wasm");
+static WASM: &'static [u8] = include_bytes!("../sample-app.wasm");
 
 fn main() -> error::Result<()> {
 
@@ -38,8 +42,27 @@ fn main() -> error::Result<()> {
         },
     };
 
+    let (em_import_object, _em_globals) = if wasmer_emscripten::is_emscripten_module(&module) {
+        println!("This is an Emscripten module!");
+        let mut emscripten_globals = wasmer_emscripten::EmscriptenGlobals::new(&module);
+        (
+            wasmer_emscripten::generate_emscripten_env(&mut emscripten_globals),
+            // TODO Em Globals is here to extend, lifetime, find better solution
+            Some(emscripten_globals),
+        )
+    } else {
+        println!("This is NOT an Emscripten module!");
+        (
+            ImportObject::new(),
+            None,
+        )
+    };
+
+    // Merge them...
+    let merged_import_object = ImportObject::merged(import_object, em_import_object);
+
     // Compile our webassembly into an `Instance`.
-    let instance = module.instantiate(&import_object)?;
+    let instance = module.instantiate(&merged_import_object)?;
 
     // Call our exported function!
     instance.call("hello_wasm", &[])?;
